@@ -9,6 +9,10 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
@@ -22,12 +26,23 @@ public class User {
 
     private String password;
 
-    private String role;
+    private String roles;
+
+    public List<String> getRoleList() {
+        if (this.roles == null || this.roles.isBlank()) {
+            return Collections.emptyList();
+        }
+
+        return Arrays.stream(this.roles.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .toList();
+    }
 
     @Builder
-    public User(String username, String password, String role) {
+    public User(String username, String password, String roles) {
         this.username = username;
         this.password = password;
-        this.role = role;
+        this.roles = roles;
     }
 }

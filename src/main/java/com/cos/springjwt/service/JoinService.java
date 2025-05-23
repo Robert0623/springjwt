@@ -30,7 +30,7 @@ public class JoinService {
         User user = User.builder()
                 .username(request.getUsername())
                 .password(encryptedPassword)
-                .role("ROLE_ADMIN")
+                .roles("ROLE_ADMIN")
                 .build();
 
         userRepository.save(user);
