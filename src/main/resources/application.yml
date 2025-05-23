@@ -10,3 +10,6 @@ spring:
       ddl-auto: none
       naming:
         physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+
+jwt:
+  secret: hoof0EYz4KGgggFnSMvXxXKbJ9YXua+4OBWQZA5f6BI=
