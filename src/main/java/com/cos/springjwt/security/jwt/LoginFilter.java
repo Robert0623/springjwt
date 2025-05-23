@@ -1,4 +1,4 @@
-package com.cos.springjwt.jwt;
+package com.cos.springjwt.security.jwt;
 
 import com.cos.springjwt.request.Signin;
 import com.fasterxml.jackson.databind.ObjectMapper;

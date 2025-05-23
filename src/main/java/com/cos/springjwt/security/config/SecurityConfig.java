@@ -1,6 +1,6 @@
-package com.cos.springjwt.config;
+package com.cos.springjwt.security.config;
 
-import com.cos.springjwt.jwt.LoginFilter;
+import com.cos.springjwt.security.jwt.LoginFilter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
