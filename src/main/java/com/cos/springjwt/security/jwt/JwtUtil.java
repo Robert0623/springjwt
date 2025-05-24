@@ -17,12 +17,12 @@ import java.util.List;
 // TODO: 예외처리
 @Component
 @Slf4j
-public class JWTUtil {
+public class JwtUtil {
 
     private final SecretKey secretKey;
     private final ObjectMapper objectMapper;
 
-    public JWTUtil(@Value("${jwt.secret}") String secret, ObjectMapper objectMapper) {
+    public JwtUtil(@Value("${jwt.secret}") String secret, ObjectMapper objectMapper) {
 
         this.secretKey = Keys.hmacShaKeyFor(Base64.getDecoder().decode(secret));
         this.objectMapper = objectMapper;
