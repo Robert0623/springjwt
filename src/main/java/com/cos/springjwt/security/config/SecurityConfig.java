@@ -1,5 +1,7 @@
 package com.cos.springjwt.security.config;
 
+import com.cos.springjwt.repository.UserRepository;
+import com.cos.springjwt.security.jwt.JwtFilter;
 import com.cos.springjwt.security.jwt.JwtUtil;
 import com.cos.springjwt.security.jwt.LoginFilter;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -23,6 +25,7 @@ public class SecurityConfig {
     private final AuthenticationConfiguration authenticationConfiguration;
     private final ObjectMapper objectMapper;
     private final JwtUtil jwtUtil;
+    private final UserRepository userRepository;
 
     @Bean
     public BCryptPasswordEncoder bCryptPasswordEncoder() {
@@ -48,6 +51,7 @@ public class SecurityConfig {
                         .requestMatchers("/admin").hasRole("ADMIN")
                         .anyRequest().authenticated())
 
+                .addFilterBefore(new JwtFilter(jwtUtil, userRepository), LoginFilter.class)
                 .addFilterAt(new LoginFilter(authenticationManager(authenticationConfiguration), objectMapper, jwtUtil), UsernamePasswordAuthenticationFilter.class)
 
                 .sessionManagement(session -> session
