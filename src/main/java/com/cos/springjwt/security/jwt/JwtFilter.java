@@ -33,7 +33,16 @@ public class JwtFilter extends OncePerRequestFilter {
             return; // 필수
         }
 
-        String token = authorization.split(" ")[1];
+        String[] jwtHeaderParts = authorization.split(" ");
+
+        if (jwtHeaderParts.length != 2 || !"Bearer".equals(jwtHeaderParts[0])) {
+
+            filterChain.doFilter(request, response);
+
+            return;
+        }
+
+        String token = jwtHeaderParts[1];
 
         if (jwtUtil.isExpired(token)) {
 
@@ -61,7 +70,10 @@ public class JwtFilter extends OncePerRequestFilter {
                 null,
                 customUserDetails.getAuthorities());
 
-        SecurityContextHolder.getContext().setAuthentication(authToken);
+        if (SecurityContextHolder.getContext().getAuthentication() == null) {
+
+            SecurityContextHolder.getContext().setAuthentication(authToken);
+        }
 
         filterChain.doFilter(request, response);
     }
