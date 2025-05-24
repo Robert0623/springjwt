@@ -10,10 +10,10 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Optional;
 
 @RequiredArgsConstructor
 public class JwtFilter extends OncePerRequestFilter {
@@ -60,10 +60,16 @@ public class JwtFilter extends OncePerRequestFilter {
             return;
         }
 
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("ID 또는 PASSWORD를 찾을 수 없습니다."));
+        Optional<User> userOptional = userRepository.findByUsername(username);
 
-        CustomUserDetails customUserDetails = new CustomUserDetails(user);
+        if (userOptional.isEmpty()) {
+
+            filterChain.doFilter(request, response);
+
+            return;
+        }
+
+        CustomUserDetails customUserDetails = new CustomUserDetails(userOptional.get());
 
         UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                 customUserDetails,

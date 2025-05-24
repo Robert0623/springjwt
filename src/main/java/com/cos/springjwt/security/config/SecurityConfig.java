@@ -1,6 +1,8 @@
 package com.cos.springjwt.security.config;
 
 import com.cos.springjwt.repository.UserRepository;
+import com.cos.springjwt.security.handler.Http401Handler;
+import com.cos.springjwt.security.handler.Http403Handler;
 import com.cos.springjwt.security.jwt.JwtFilter;
 import com.cos.springjwt.security.jwt.JwtUtil;
 import com.cos.springjwt.security.jwt.LoginFilter;
@@ -73,6 +75,11 @@ public class SecurityConfig {
 
                 .addFilterBefore(new JwtFilter(jwtUtil, userRepository), LoginFilter.class)
                 .addFilterAt(new LoginFilter(authenticationManager(authenticationConfiguration), objectMapper, jwtUtil), UsernamePasswordAuthenticationFilter.class)
+
+                .exceptionHandling(e -> {
+                    e.accessDeniedHandler(new Http403Handler(objectMapper));
+                    e.authenticationEntryPoint(new Http401Handler(objectMapper));
+                })
 
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
