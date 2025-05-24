@@ -28,7 +28,7 @@ public class JwtUtil {
         this.objectMapper = objectMapper;
     }
 
-    // 일회용
+    // 시크릿키 발급 --> 일회용
     public void generateHs256SecretKey() {
 
         SecretKey secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
