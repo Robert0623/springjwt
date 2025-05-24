@@ -16,6 +16,9 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -43,6 +46,21 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         return http
+
+                .cors(cors -> cors
+                        .configurationSource(request -> {
+
+                            CorsConfiguration config = new CorsConfiguration();
+
+                            config.setAllowedOrigins(List.of("http://localhost:8080"));
+                            config.setAllowedMethods(List.of("*"));
+                            config.setAllowCredentials(true);
+                            config.setAllowedHeaders(List.of("*"));
+                            config.setExposedHeaders(List.of("Authorization"));
+                            config.setMaxAge(3600L);
+
+                            return config;
+                        }))
 
                 .csrf(auth -> auth.disable())
                 .formLogin(auth -> auth.disable())
