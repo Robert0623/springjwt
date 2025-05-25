@@ -1,6 +1,8 @@
 package com.cos.springjwt.controller;
 
+import com.cos.springjwt.security.domain.Refresh;
 import com.cos.springjwt.security.jwt.JwtUtil;
+import com.cos.springjwt.security.repository.RefreshRepository;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -11,6 +13,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
 @RestController
@@ -18,6 +21,7 @@ import java.util.List;
 public class ReissueController {
 
     private final JwtUtil jwtUtil;
+    private final RefreshRepository refreshRepository;
 
     @PostMapping("/reissue")
     public ResponseEntity<?> reissue(HttpServletRequest request, HttpServletResponse response) {
@@ -48,11 +52,21 @@ public class ReissueController {
             return ResponseEntity.badRequest().body("invalid refresh token");
         }
 
+        boolean refreshTokenExists = refreshRepository.existsByRefresh(refresh);
+
+        if (!refreshTokenExists) {
+
+            return ResponseEntity.badRequest().body("invalid refresh token");
+        }
+
         String username = jwtUtil.getUsername(refresh);
         List<String> roles = jwtUtil.getRoles(refresh);
 
         String newAccess = jwtUtil.createJwt("access", username, roles, 60 * 10 * 1000L);
         String newRefresh = jwtUtil.createJwt("refresh", username, roles, 60 * 60 * 24 * 1000L);
+
+        refreshRepository.deleteByRefresh(refresh);
+        addRefreshEntity(username, refresh, 60 * 60 * 24 * 1000L);
 
         response.setHeader("access", newAccess);
         response.addCookie(createCookie("refresh", newRefresh));
@@ -67,5 +81,17 @@ public class ReissueController {
         cookie.setHttpOnly(true);
 
         return cookie;
+    }
+
+    private void addRefreshEntity(String username, String refresh, Long expiredMs) {
+        Date data = new Date(System.currentTimeMillis() + expiredMs);
+
+        Refresh refreshEntity = Refresh.builder()
+                .username(username)
+                .refresh(refresh)
+                .expiration(data.toString())
+                .build();
+
+        refreshRepository.save(refreshEntity);
     }
 }

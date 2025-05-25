@@ -6,6 +6,7 @@ import com.cos.springjwt.security.handler.Http403Handler;
 import com.cos.springjwt.security.jwt.JwtFilter;
 import com.cos.springjwt.security.jwt.JwtUtil;
 import com.cos.springjwt.security.jwt.LoginFilter;
+import com.cos.springjwt.security.repository.RefreshRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -31,6 +32,7 @@ public class SecurityConfig {
     private final ObjectMapper objectMapper;
     private final JwtUtil jwtUtil;
     private final UserRepository userRepository;
+    private final RefreshRepository refreshRepository;
 
     @Bean
     public BCryptPasswordEncoder bCryptPasswordEncoder() {
@@ -75,7 +77,7 @@ public class SecurityConfig {
                         .anyRequest().authenticated())
 
                 .addFilterBefore(new JwtFilter(jwtUtil, userRepository), LoginFilter.class)
-                .addFilterAt(new LoginFilter(authenticationManager(authenticationConfiguration), objectMapper, jwtUtil), UsernamePasswordAuthenticationFilter.class)
+                .addFilterAt(new LoginFilter(authenticationManager(authenticationConfiguration), objectMapper, jwtUtil, refreshRepository), UsernamePasswordAuthenticationFilter.class)
 
                 .exceptionHandling(e -> {
                     e.accessDeniedHandler(new Http403Handler(objectMapper));
