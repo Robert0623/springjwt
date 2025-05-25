@@ -60,7 +60,7 @@ public class SecurityConfig {
                             config.setAllowedMethods(List.of("*"));
                             config.setAllowCredentials(true);
                             config.setAllowedHeaders(List.of("*"));
-                            config.setExposedHeaders(List.of("Authorization"));
+                            config.setExposedHeaders(List.of("access"));
                             config.setMaxAge(3600L);
 
                             return config;

@@ -9,11 +9,14 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 
 @RestController
@@ -24,6 +27,7 @@ public class ReissueController {
     private final RefreshRepository refreshRepository;
 
     @PostMapping("/reissue")
+    @Transactional
     public ResponseEntity<?> reissue(HttpServletRequest request, HttpServletResponse response) {
 
         Cookie[] cookies = request.getCookies();
@@ -42,7 +46,7 @@ public class ReissueController {
             jwtUtil.isExpired(refresh);
         } catch (ExpiredJwtException e) {
 
-            return ResponseEntity.badRequest().body("access token expired");
+            return ResponseEntity.badRequest().body("refresh token expired");
         }
 
         String category = jwtUtil.getCategory(refresh);
@@ -66,7 +70,7 @@ public class ReissueController {
         String newRefresh = jwtUtil.createJwt("refresh", username, roles, 60 * 60 * 24 * 1000L);
 
         refreshRepository.deleteByRefresh(refresh);
-        addRefreshEntity(username, refresh, 60 * 60 * 24 * 1000L);
+        addRefreshEntity(username, newRefresh, 60 * 60 * 24 * 1000L);
 
         response.setHeader("access", newAccess);
         response.addCookie(createCookie("refresh", newRefresh));
@@ -84,12 +88,14 @@ public class ReissueController {
     }
 
     private void addRefreshEntity(String username, String refresh, Long expiredMs) {
-        Date data = new Date(System.currentTimeMillis() + expiredMs);
+        LocalDateTime datetime = Instant.ofEpochMilli(System.currentTimeMillis() + expiredMs)
+                .atZone(ZoneId.systemDefault())
+                .toLocalDateTime();
 
         Refresh refreshEntity = Refresh.builder()
                 .username(username)
                 .refresh(refresh)
-                .expiration(data.toString())
+                .expiration(datetime)
                 .build();
 
         refreshRepository.save(refreshEntity);

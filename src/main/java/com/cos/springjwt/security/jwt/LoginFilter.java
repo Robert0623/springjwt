@@ -21,7 +21,9 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import java.io.IOException;
-import java.util.Date;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 import static jakarta.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
@@ -101,12 +103,14 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
     }
 
     private void addRefreshEntity(String username, String refresh, Long expiredMs) {
-        Date data = new Date(System.currentTimeMillis() + expiredMs);
+        LocalDateTime datetime = Instant.ofEpochMilli(System.currentTimeMillis() + expiredMs)
+                .atZone(ZoneId.systemDefault())
+                .toLocalDateTime();
 
         Refresh refreshEntity = Refresh.builder()
                 .username(username)
                 .refresh(refresh)
-                .expiration(data.toString())
+                .expiration(datetime)
                 .build();
 
         refreshRepository.save(refreshEntity);
