@@ -58,6 +58,16 @@ public class JwtUtil {
         return objectMapper.convertValue(raw, new TypeReference<List<String>>() {});
     }
 
+    public String getCategory(String token) {
+
+        return Jwts.parser()
+                .verifyWith(secretKey)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .get("category", String.class);
+    }
+
     public boolean isExpired(String token) {
 
         Date expiration = Jwts.parser()
@@ -77,6 +87,18 @@ public class JwtUtil {
     public String createJwt(String username, List<String> roles, long expireMs) {
 
         return Jwts.builder()
+                .claim("username", username)
+                .claim("roles", roles)
+                .issuedAt(new Date(System.currentTimeMillis()))
+                .expiration(new Date(System.currentTimeMillis() + expireMs))
+                .signWith(secretKey)
+                .compact();
+    }
+
+    public String createJwt(String category, String username, List<String> roles, long expireMs) {
+
+        return Jwts.builder()
+                .claim("category", category)
                 .claim("username", username)
                 .claim("roles", roles)
                 .issuedAt(new Date(System.currentTimeMillis()))

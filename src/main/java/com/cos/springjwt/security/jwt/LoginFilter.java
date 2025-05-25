@@ -2,14 +2,15 @@ package com.cos.springjwt.security.jwt;
 
 import com.cos.springjwt.request.Signin;
 import com.cos.springjwt.response.ErrorResponse;
-import com.cos.springjwt.security.domain.CustomUserDetails;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -20,7 +21,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import java.io.IOException;
 import java.util.List;
 
-import static jakarta.servlet.http.HttpServletResponse.*;
+import static jakarta.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
@@ -52,16 +53,17 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
     @Override
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult) throws IOException, ServletException {
 
-        CustomUserDetails customUserDetails = (CustomUserDetails) authResult.getPrincipal();
-
-        String username = customUserDetails.getUsername();
-        List<String> roles = customUserDetails.getAuthorities().stream()
+        String username = authResult.getName();
+        List<String> roles = authResult.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .toList();
 
-        String token = jwtUtil.createJwt(username, roles, 60 * 60 * 1000L);
+        String access = jwtUtil.createJwt("access", username, roles, 60 * 10 * 1000L);
+        String refresh = jwtUtil.createJwt("refresh", username, roles, 60 * 60 * 24 * 1000L);
 
-        response.addHeader("Authorization", "Bearer " + token);
+        response.addHeader("access", access);
+        response.addCookie(createCookie("refresh", refresh));
+        response.setStatus(HttpStatus.OK.value());
     }
 
     @Override
@@ -79,5 +81,16 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
         response.setStatus(SC_BAD_REQUEST);
 
         objectMapper.writeValue(response.getWriter(), errorResponse);
+    }
+
+    private Cookie createCookie(String key, String value) {
+
+        Cookie cookie = new Cookie(key, value);
+        cookie.setMaxAge(60 * 60 * 24);
+        // cookie.setSecure(true); // https
+        // cookie.setPath("/");
+        cookie.setHttpOnly(true);
+
+        return cookie;
     }
 }
