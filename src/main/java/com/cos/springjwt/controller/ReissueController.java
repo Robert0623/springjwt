@@ -52,9 +52,20 @@ public class ReissueController {
         List<String> roles = jwtUtil.getRoles(refresh);
 
         String newAccess = jwtUtil.createJwt("access", username, roles, 60 * 10 * 1000L);
+        String newRefresh = jwtUtil.createJwt("refresh", username, roles, 60 * 60 * 24 * 1000L);
 
         response.setHeader("access", newAccess);
+        response.addCookie(createCookie("refresh", newRefresh));
 
         return ResponseEntity.ok().build();
+    }
+
+    private Cookie createCookie(String key, String value) {
+
+        Cookie cookie = new Cookie(key, value);
+        cookie.setMaxAge(60 * 60 * 24);
+        cookie.setHttpOnly(true);
+
+        return cookie;
     }
 }
