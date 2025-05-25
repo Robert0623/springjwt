@@ -1,8 +1,8 @@
 package com.cos.springjwt.controller;
 
-import com.cos.springjwt.security.domain.Refresh;
 import com.cos.springjwt.security.jwt.JwtUtil;
 import com.cos.springjwt.security.repository.RefreshRepository;
+import com.cos.springjwt.security.service.AuthService;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -13,9 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.List;
 
@@ -25,6 +22,7 @@ public class ReissueController {
 
     private final JwtUtil jwtUtil;
     private final RefreshRepository refreshRepository;
+    private final AuthService authService;
 
     @PostMapping("/reissue")
     @Transactional
@@ -70,34 +68,11 @@ public class ReissueController {
         String newRefresh = jwtUtil.createJwt("refresh", username, roles, 60 * 60 * 24 * 1000L);
 
         refreshRepository.deleteByRefresh(refresh);
-        addRefreshEntity(username, newRefresh, 60 * 60 * 24 * 1000L);
+        authService.addRefreshEntity(username, newRefresh, 60 * 60 * 24 * 1000L);
 
         response.setHeader("access", newAccess);
-        response.addCookie(createCookie("refresh", newRefresh));
+        response.addCookie(authService.createCookie("refresh", newRefresh));
 
         return ResponseEntity.ok().build();
-    }
-
-    private Cookie createCookie(String key, String value) {
-
-        Cookie cookie = new Cookie(key, value);
-        cookie.setMaxAge(60 * 60 * 24);
-        cookie.setHttpOnly(true);
-
-        return cookie;
-    }
-
-    private void addRefreshEntity(String username, String refresh, Long expiredMs) {
-        LocalDateTime datetime = Instant.ofEpochMilli(System.currentTimeMillis() + expiredMs)
-                .atZone(ZoneId.systemDefault())
-                .toLocalDateTime();
-
-        Refresh refreshEntity = Refresh.builder()
-                .username(username)
-                .refresh(refresh)
-                .expiration(datetime)
-                .build();
-
-        refreshRepository.save(refreshEntity);
     }
 }

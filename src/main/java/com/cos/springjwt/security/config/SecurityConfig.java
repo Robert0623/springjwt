@@ -81,7 +81,7 @@ public class SecurityConfig {
                         .anyRequest().authenticated())
 
                 .addFilterBefore(new JwtFilter(jwtUtil, userRepository), LoginFilter.class)
-                .addFilterAt(new LoginFilter(authenticationManager(authenticationConfiguration), objectMapper, jwtUtil, refreshRepository), UsernamePasswordAuthenticationFilter.class)
+                .addFilterAt(new LoginFilter(authenticationManager(authenticationConfiguration), objectMapper, jwtUtil, authService), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(new CustomLogoutFilter(jwtUtil, refreshRepository, authService), LogoutFilter.class)
 
                 .exceptionHandling(e -> {

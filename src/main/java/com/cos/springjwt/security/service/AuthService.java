@@ -1,10 +1,16 @@
 package com.cos.springjwt.security.service;
 
+import com.cos.springjwt.security.domain.Refresh;
 import com.cos.springjwt.security.jwt.JwtUtil;
 import com.cos.springjwt.security.repository.RefreshRepository;
+import jakarta.servlet.http.Cookie;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 @Service
 @RequiredArgsConstructor
@@ -29,5 +35,31 @@ public class AuthService {
         }
 
         refreshRepository.deleteByRefresh(refresh);
+    }
+
+    public Cookie createCookie(String key, String value) {
+
+        Cookie cookie = new Cookie(key, value);
+        cookie.setMaxAge(60 * 60 * 24);
+        // cookie.setSecure(true); // https
+        // cookie.setPath("/");
+        cookie.setHttpOnly(true);
+
+        return cookie;
+    }
+
+    @Transactional
+    public void addRefreshEntity(String username, String refresh, Long expiredMs) {
+        LocalDateTime datetime = Instant.ofEpochMilli(System.currentTimeMillis() + expiredMs)
+                .atZone(ZoneId.systemDefault())
+                .toLocalDateTime();
+
+        Refresh refreshEntity = Refresh.builder()
+                .username(username)
+                .refresh(refresh)
+                .expiration(datetime)
+                .build();
+
+        refreshRepository.save(refreshEntity);
     }
 }
