@@ -3,6 +3,7 @@ package com.cos.springjwt.security.service;
 import com.cos.springjwt.security.domain.Refresh;
 import com.cos.springjwt.security.jwt.JwtUtil;
 import com.cos.springjwt.security.repository.RefreshRepository;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.http.Cookie;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -22,16 +23,22 @@ public class AuthService {
     @Transactional
     public void logout(String refresh) {
 
-        String category = jwtUtil.getCategory(refresh);
-        if (!"refresh".equals(category)) {
+        try {
+            String category = jwtUtil.getCategory(refresh);
+            if (!"refresh".equals(category)) {
 
-            throw new IllegalArgumentException("invalid token category");
+                throw new IllegalArgumentException("invalid token category");
+            }
+        } catch (JwtException e) {
+
+            throw new IllegalArgumentException("유효하지 않은 refresh token");
         }
+
 
         boolean existsRefreshToken = refreshRepository.existsByRefresh(refresh);
         if (!existsRefreshToken) {
 
-            throw new IllegalArgumentException("refresh token not found");
+            throw new IllegalArgumentException("등록되지 않은 refresh token");
         }
 
         refreshRepository.deleteByRefresh(refresh);

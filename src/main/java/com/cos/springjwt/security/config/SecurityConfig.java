@@ -3,6 +3,7 @@ package com.cos.springjwt.security.config;
 import com.cos.springjwt.repository.UserRepository;
 import com.cos.springjwt.security.handler.Http401Handler;
 import com.cos.springjwt.security.handler.Http403Handler;
+import com.cos.springjwt.security.handler.AuthErrorHandler;
 import com.cos.springjwt.security.jwt.CustomLogoutFilter;
 import com.cos.springjwt.security.jwt.JwtFilter;
 import com.cos.springjwt.security.jwt.JwtUtil;
@@ -37,6 +38,7 @@ public class SecurityConfig {
     private final UserRepository userRepository;
     private final RefreshRepository refreshRepository;
     private final AuthService authService;
+    private final AuthErrorHandler authErrorHandler;
 
     @Bean
     public BCryptPasswordEncoder bCryptPasswordEncoder() {
@@ -80,9 +82,9 @@ public class SecurityConfig {
                         .requestMatchers("/reissue").permitAll()
                         .anyRequest().authenticated())
 
-                .addFilterBefore(new JwtFilter(jwtUtil, userRepository), LoginFilter.class)
+                .addFilterBefore(new JwtFilter(jwtUtil, userRepository, authErrorHandler), LoginFilter.class)
                 .addFilterAt(new LoginFilter(authenticationManager(authenticationConfiguration), objectMapper, jwtUtil, authService), UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(new CustomLogoutFilter(jwtUtil, refreshRepository, authService), LogoutFilter.class)
+                .addFilterBefore(new CustomLogoutFilter(authService, authErrorHandler), LogoutFilter.class)
 
                 .exceptionHandling(e -> {
                     e.accessDeniedHandler(new Http403Handler(objectMapper));

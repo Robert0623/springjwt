@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -43,7 +44,8 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
             loginInfo = objectMapper.readValue(request.getInputStream(), Signin.class);
 
         } catch (IOException e) {
-            throw new RuntimeException(e);
+
+            throw new AuthenticationServiceException("Signin.class 파싱 실패", e);
         }
 
         UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(loginInfo.getUsername(), loginInfo.getPassword());
@@ -72,7 +74,7 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
     @Override
     protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response, AuthenticationException failed) throws IOException, ServletException {
 
-        log.error("[인증오류] 아이디 혹은 비밀번호가 올바르지 않습니다.");
+        log.error("[인증오류] 아이디 혹은 비밀번호가 올바르지 않습니다: {}", failed.getMessage());
 
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .code("400")

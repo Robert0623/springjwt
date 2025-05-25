@@ -1,6 +1,6 @@
 package com.cos.springjwt.security.jwt;
 
-import com.cos.springjwt.security.repository.RefreshRepository;
+import com.cos.springjwt.security.handler.AuthErrorHandler;
 import com.cos.springjwt.security.service.AuthService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -18,9 +18,8 @@ import java.util.Arrays;
 @RequiredArgsConstructor
 public class CustomLogoutFilter extends GenericFilterBean {
 
-    private final JwtUtil jwtUtil;
-    private final RefreshRepository refreshRepository;
     private final AuthService authService;
+    private final AuthErrorHandler authErrorHandler;
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
@@ -45,6 +44,12 @@ public class CustomLogoutFilter extends GenericFilterBean {
         }
 
         Cookie[] cookies = request.getCookies();
+        if (cookies == null) {
+
+            authErrorHandler.handleError(response, "400", "cookie 없음");
+            return;
+        }
+
         String refresh = Arrays.stream(cookies)
                 .filter(cookie -> "refresh".equals(cookie.getName()))
                 .map(Cookie::getValue)
@@ -53,7 +58,7 @@ public class CustomLogoutFilter extends GenericFilterBean {
 
         if (refresh == null) {
 
-            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            authErrorHandler.handleError(response, "400", "refresh token 없음");
             return;
         }
 
@@ -61,7 +66,11 @@ public class CustomLogoutFilter extends GenericFilterBean {
             authService.logout(refresh);
         } catch (IllegalArgumentException e) {
 
-            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            authErrorHandler.handleError(response, "400", e.getMessage());
+            return;
+        } catch (Exception e) {
+
+            authErrorHandler.handleError(response, "500", "로그아웃 처리 중 오류 발생");
             return;
         }
 
