@@ -3,10 +3,12 @@ package com.cos.springjwt.security.config;
 import com.cos.springjwt.repository.UserRepository;
 import com.cos.springjwt.security.handler.Http401Handler;
 import com.cos.springjwt.security.handler.Http403Handler;
+import com.cos.springjwt.security.jwt.CustomLogoutFilter;
 import com.cos.springjwt.security.jwt.JwtFilter;
 import com.cos.springjwt.security.jwt.JwtUtil;
 import com.cos.springjwt.security.jwt.LoginFilter;
 import com.cos.springjwt.security.repository.RefreshRepository;
+import com.cos.springjwt.security.service.AuthService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -19,6 +21,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.logout.LogoutFilter;
 import org.springframework.web.cors.CorsConfiguration;
 
 import java.util.List;
@@ -33,6 +36,7 @@ public class SecurityConfig {
     private final JwtUtil jwtUtil;
     private final UserRepository userRepository;
     private final RefreshRepository refreshRepository;
+    private final AuthService authService;
 
     @Bean
     public BCryptPasswordEncoder bCryptPasswordEncoder() {
@@ -78,6 +82,7 @@ public class SecurityConfig {
 
                 .addFilterBefore(new JwtFilter(jwtUtil, userRepository), LoginFilter.class)
                 .addFilterAt(new LoginFilter(authenticationManager(authenticationConfiguration), objectMapper, jwtUtil, refreshRepository), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(new CustomLogoutFilter(jwtUtil, refreshRepository, authService), LogoutFilter.class)
 
                 .exceptionHandling(e -> {
                     e.accessDeniedHandler(new Http403Handler(objectMapper));
